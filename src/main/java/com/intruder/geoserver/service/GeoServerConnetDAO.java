@@ -22,6 +22,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 
 
 @Repository
@@ -81,7 +82,6 @@ public class GeoServerConnetDAO {
         return contents;
     }
 
-
     /**
      * get Vector data (GeoJson)
      * @param _url
@@ -108,7 +108,25 @@ public class GeoServerConnetDAO {
     }
 
 
-
+    /**
+     * get Layer Information
+     * @param _ws
+     * @param _name
+     * @return
+     */
+    public JSONObject getLayerInfo(String _ws, String _name){
+        String url;
+        try {
+            url = "workspaces/" + _ws + "/layers/"
+                    + URLEncoder.encode(_name, "UTF-8");
+            String search = RESTFulConnect(url, HttpMethod.GET);
+            JSONObject obj = new JSONObject(search).getJSONObject("layer");
+            return obj;
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     /**
      * Layer Information (necessary workspace and layer name)
@@ -117,18 +135,17 @@ public class GeoServerConnetDAO {
      * @return
      */
     public void deleteLayer(String _ws, String _layerName) {
-        String url = "workspaces/" + _ws + "/layers/" + _layerName;
-        String search =  RESTFulConnect(url, HttpMethod.GET);
-        JSONObject obj = new JSONObject(search).getJSONObject("layer");
-        JSONObject resource = obj.getJSONObject("resource");
-        RESTFulConnect(url, HttpMethod.DELETE);
-        freeConnect(resource.getString("href"), HttpMethod.DELETE);
+        String url = null;
+        try {
+            url = "workspaces/" + _ws + "/layers/" + URLEncoder.encode(_layerName, "UTF-8");
+            JSONObject obj = getLayerInfo(_ws, _layerName);
+            JSONObject resource = obj.getJSONObject("resource");
+            RESTFulConnect(url, HttpMethod.DELETE);
+            freeConnect(resource.getString("href"), HttpMethod.DELETE);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
-
-
-
-
-
 
     /**
      * RESTFul method connect for GeoServer RESTFul
